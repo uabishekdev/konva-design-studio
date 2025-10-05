@@ -22,6 +22,7 @@ const canvasSlice = createSlice({
       state.scale = action.payload;
     },
     setSelectedId: (state, action) => {
+      console.log("🎯 SET SELECTED ID:", action.payload);
       state.selectedId = action.payload;
     },
     setBackgroundColor: (state, action) => {

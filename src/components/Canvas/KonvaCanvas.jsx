@@ -1,13 +1,12 @@
 import React, { useRef, useEffect, useState, Suspense, lazy } from "react";
-import { Stage, Layer, Rect, Group } from "react-konva";
+import { Stage, Layer, Rect } from "react-konva";
 import { useSelector, useDispatch } from "react-redux";
 import { setSelectedId } from "../../store/slices/canvasSlice";
 import { updateElement } from "../../store/slices/elementsSlice";
 
-// Lazy load components
 const ImageFrame = lazy(() => import("./CanvasObjects/ImageFrame"));
 const VideoFrame = lazy(() => import("./CanvasObjects/VideoFrame"));
-const ShapeFrame = lazy(() => import("./CanvasObjects/ShapeFrame"));
+const FrameContainer = lazy(() => import("./CanvasObjects/FrameContainer"));
 const CustomTransformer = lazy(() => import("./Transformer/CustomTransformer"));
 
 const KonvaCanvas = () => {
@@ -20,16 +19,15 @@ const KonvaCanvas = () => {
   const elements = useSelector((state) => state.elements.items);
 
   const [containerSize, setContainerSize] = useState({
-    width: window.innerWidth - 300,
-    height: window.innerHeight - 100,
+    width: window.innerWidth - 320,
+    height: window.innerHeight - 64,
   });
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       setContainerSize({
-        width: window.innerWidth - 300,
-        height: window.innerHeight - 100,
+        width: window.innerWidth - 320,
+        height: window.innerHeight - 64,
       });
     };
 
@@ -37,18 +35,13 @@ const KonvaCanvas = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Calculate scale to fit canvas in viewport
   const canvasScale =
     Math.min(containerSize.width / width, containerSize.height / height, 1) *
     scale;
 
   const handleStageClick = (e) => {
-    // Deselect when clicking on empty area
-    if (e.target === e.target.getStage()) {
-      dispatch(setSelectedId(null));
-    }
+    console.log(" Stage clicked, target:", e.target.getClassName());
   };
-
   const handleElementDragEnd = (id, e) => {
     dispatch(
       updateElement({
@@ -65,7 +58,6 @@ const KonvaCanvas = () => {
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
 
-    // Reset scale and apply to width/height
     node.scaleX(1);
     node.scaleY(1);
 
@@ -84,9 +76,19 @@ const KonvaCanvas = () => {
   };
 
   const renderElement = (element) => {
-    const commonProps = {
-      key: element.id,
+    if (element.parentId) {
+      console.log("⏭️ Skipping child element:", element.id);
+      return null;
+    }
+
+    console.log("Rendering element:", {
       id: element.id,
+      type: element.type,
+      clipShape: element.clipShape,
+      hasChildren: element.children?.length > 0,
+    });
+
+    const commonProps = {
       element: element,
       isSelected: element.id === selectedId,
       onSelect: () => dispatch(setSelectedId(element.id)),
@@ -94,13 +96,30 @@ const KonvaCanvas = () => {
       onTransformEnd: (node) => handleElementTransformEnd(element.id, node),
     };
 
+    if (element.type === "shape") {
+      const childImage =
+        element.children?.length > 0
+          ? elements.find((el) => el.id === element.children[0])
+          : null;
+
+      console.log(" Frame children lookup:", {
+        frameId: element.id,
+        childrenIds: element.children,
+        foundChild: childImage,
+      });
+
+      return (
+        <FrameContainer key={element.id} {...commonProps}>
+          {childImage}
+        </FrameContainer>
+      );
+    }
+
     switch (element.type) {
       case "image":
-        return <ImageFrame {...commonProps} />;
+        return <ImageFrame key={element.id} {...commonProps} />;
       case "video":
-        return <VideoFrame {...commonProps} />;
-      case "shape":
-        return <ShapeFrame {...commonProps} />;
+        return <VideoFrame key={element.id} {...commonProps} />;
       default:
         return null;
     }
@@ -126,7 +145,6 @@ const KonvaCanvas = () => {
           onClick={handleStageClick}
           onTap={handleStageClick}
         >
-          {/* Background Layer */}
           <Layer>
             <Rect
               x={0}
@@ -137,12 +155,9 @@ const KonvaCanvas = () => {
             />
           </Layer>
 
-          {/* Elements Layer */}
           <Layer>
             <Suspense fallback={null}>
               {elements.map((element) => renderElement(element))}
-
-              {/* Transformer for selected element */}
               {selectedId && <CustomTransformer selectedId={selectedId} />}
             </Suspense>
           </Layer>

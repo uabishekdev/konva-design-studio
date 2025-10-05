@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import { Group, Image as KonvaImage, Rect } from "react-konva";
+import { Group, Image as KonvaImage } from "react-konva";
 import useImage from "use-image";
 
 const ImageFrame = ({
@@ -8,6 +8,7 @@ const ImageFrame = ({
   onSelect,
   onDragEnd,
   onTransformEnd,
+  isChild = false,
 }) => {
   const groupRef = useRef();
   const [image] = useImage(element.src, "anonymous");
@@ -30,7 +31,9 @@ const ImageFrame = ({
 
     let scaleX, scaleY;
 
-    if (element.fit === "cover") {
+    const fitMode = isChild ? "cover" : element.fit || "cover";
+
+    if (fitMode === "cover") {
       if (frameAspect > imageAspect) {
         scaleX = element.width / imageDimensions.width;
         scaleY = scaleX;
@@ -56,6 +59,20 @@ const ImageFrame = ({
     (element.width - (imageDimensions?.width || 0) * scale.scaleX) / 2;
   const imageY =
     (element.height - (imageDimensions?.height || 0) * scale.scaleY) / 2;
+
+  if (isChild) {
+    return image && imageDimensions ? (
+      <KonvaImage
+        image={image}
+        x={imageX}
+        y={imageY}
+        width={imageDimensions.width}
+        height={imageDimensions.height}
+        scaleX={scale.scaleX}
+        scaleY={scale.scaleY}
+      />
+    ) : null;
+  }
 
   const clipFunc = (ctx) => {
     const { clipShape, cornerRadius = 0 } = element;
@@ -109,16 +126,6 @@ const ImageFrame = ({
           />
         )}
       </Group>
-
-      {element.showBorder && (
-        <Rect
-          width={element.width}
-          height={element.height}
-          stroke={element.borderColor || "#000"}
-          strokeWidth={element.borderWidth || 2}
-          cornerRadius={element.cornerRadius || 0}
-        />
-      )}
     </Group>
   );
 };

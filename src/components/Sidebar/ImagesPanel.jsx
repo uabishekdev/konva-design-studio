@@ -1,10 +1,16 @@
 import React from "react";
-import { useDispatch } from "react-redux";
-import { addElement } from "../../store/slices/elementsSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { addElement, addImageToFrame } from "../../store/slices/elementsSlice";
 import { Upload } from "lucide-react";
 
 const ImagesPanel = () => {
   const dispatch = useDispatch();
+  const selectedId = useSelector((state) => state.canvas.selectedId);
+  const elements = useSelector((state) => state.elements.items);
+  const selectedElement = elements.find((el) => el.id === selectedId);
+
+  console.log("🎯 Selected ID:", selectedId);
+  console.log("🎯 Selected Element:", selectedElement);
 
   const sampleImages = [
     "https://images.unsplash.com/photo-1557683316-973673baf926?w=400",
@@ -13,40 +19,64 @@ const ImagesPanel = () => {
     "https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?w=400",
   ];
 
+  const handleImageClick = (src) => {
+    console.log(" Image clicked:", src);
+
+    if (selectedId && selectedElement?.type === "shape") {
+      console.log("➕ Adding image to frame");
+      dispatch(
+        addImageToFrame({
+          frameId: selectedId,
+          imageData: { src },
+        })
+      );
+    } else {
+      dispatch(
+        addElement({
+          type: "image",
+          src,
+          x: 300,
+          y: 200,
+          width: 300,
+          height: 200,
+          fit: "cover",
+        })
+      );
+    }
+  };
+
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = (event) => {
-        dispatch(
-          addElement({
-            type: "image",
-            src: event.target.result,
-            x: 300,
-            y: 200,
-            width: 300,
-            height: 200,
-            fit: "cover",
-          })
-        );
+        const src = event.target.result;
+        if (selectedId && selectedElement?.type === "shape") {
+          dispatch(
+            addImageToFrame({
+              frameId: selectedId,
+              imageData: { src },
+            })
+          );
+        } else {
+          dispatch(
+            addElement({
+              type: "image",
+              src,
+              x: 300,
+              y: 200,
+              width: 300,
+              height: 200,
+              fit: "cover",
+            })
+          );
+        }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const addSampleImage = (src) => {
-    dispatch(
-      addElement({
-        type: "image",
-        src,
-        x: 300,
-        y: 200,
-        width: 300,
-        height: 200,
-        fit: "cover",
-      })
-    );
-  };
+  const isFrameSelected = selectedId && selectedElement?.type === "shape";
 
   return (
     <div className="p-4">
@@ -63,13 +93,24 @@ const ImagesPanel = () => {
         />
       </label>
 
+      {isFrameSelected && (
+        <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <p className="text-sm text-blue-700 font-medium">
+            Frame selected - Click image to add
+          </p>
+          <p className="text-xs text-blue-600 mt-1">
+            Shape: {selectedElement.clipShape || "none"}
+          </p>
+        </div>
+      )}
+
       <h4 className="font-medium text-sm text-gray-700 mb-3">Sample Images</h4>
       <div className="grid grid-cols-2 gap-3">
         {sampleImages.map((src, index) => (
           <button
             key={index}
-            onClick={() => addSampleImage(src)}
-            className="aspect-square rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 hover:scale-105"
+            onClick={() => handleImageClick(src)}
+            className="aspect-square rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 hover:scale-105 hover:ring-2 hover:ring-blue-500"
           >
             <img
               src={src}
