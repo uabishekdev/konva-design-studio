@@ -9,8 +9,6 @@ const ImagesPanel = () => {
   const elements = useSelector((state) => state.elements.items);
   const selectedElement = elements.find((el) => el.id === selectedId);
 
-  console.log("🎯 Selected ID:", selectedId);
-  console.log("🎯 Selected Element:", selectedElement);
 
   const sampleImages = [
     "https://images.unsplash.com/photo-1557683316-973673baf926?w=400",
