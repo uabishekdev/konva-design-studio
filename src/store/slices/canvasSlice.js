@@ -6,8 +6,7 @@ const initialState = {
   scale: 1,
   selectedId: null,
   backgroundColor: "#ffffff",
-  history: [],
-  historyStep: 0,
+  exportRequestTimestamp: null,
 };
 
 const canvasSlice = createSlice({
@@ -22,26 +21,17 @@ const canvasSlice = createSlice({
       state.scale = action.payload;
     },
     setSelectedId: (state, action) => {
-      console.log("🎯 SET SELECTED ID:", action.payload);
+      console.log(" SET SELECTED ID:", action.payload);
       state.selectedId = action.payload;
     },
     setBackgroundColor: (state, action) => {
       state.backgroundColor = action.payload;
     },
-    addToHistory: (state, action) => {
-      state.history = state.history.slice(0, state.historyStep + 1);
-      state.history.push(action.payload);
-      state.historyStep += 1;
+    requestExport: (state) => {
+      state.exportRequestTimestamp = Date.now();
     },
-    undo: (state) => {
-      if (state.historyStep > 0) {
-        state.historyStep -= 1;
-      }
-    },
-    redo: (state) => {
-      if (state.historyStep < state.history.length - 1) {
-        state.historyStep += 1;
-      }
+    clearExportRequest: (state) => {
+      state.exportRequestTimestamp = null;
     },
   },
 });
@@ -51,9 +41,8 @@ export const {
   setScale,
   setSelectedId,
   setBackgroundColor,
-  addToHistory,
-  undo,
-  redo,
+  requestExport,
+  clearExportRequest,
 } = canvasSlice.actions;
 
 export default canvasSlice.reducer;

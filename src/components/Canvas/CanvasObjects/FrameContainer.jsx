@@ -13,7 +13,7 @@ const FrameContainer = ({
 }) => {
   const groupRef = useRef();
   const dispatch = useDispatch();
-  const [image] = useImage(children?.src);
+  const [image] = useImage(children?.src, "anonymous");
 
   const handleDragStart = () => {
     dispatch(setSelectedId(element.id));
@@ -190,23 +190,20 @@ const FrameContainer = ({
       id={element.id}
       x={element.x}
       y={element.y}
+      width={element.width}
+      height={element.height}
       rotation={element.rotation || 0}
       draggable
       onDragStart={handleDragStart}
       onDragEnd={onDragEnd}
       onTransformEnd={() => onTransformEnd(groupRef.current)}
     >
-      {/* Background Shape */}
       {renderBackgroundShape()}
-
-      {/* Clipped Image */}
       {children && image && imageProps && (
         <Group clipFunc={clipFunc}>
           <KonvaImage image={image} {...imageProps} />
         </Group>
       )}
-
-      {/* Border Shape */}
       {renderBorderShape()}
     </Group>
   );

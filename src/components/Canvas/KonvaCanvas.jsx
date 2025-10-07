@@ -1,7 +1,10 @@
 import React, { useRef, useEffect, useState, Suspense, lazy } from "react";
 import { Stage, Layer, Rect } from "react-konva";
 import { useSelector, useDispatch } from "react-redux";
-import { setSelectedId } from "../../store/slices/canvasSlice";
+import {
+  setSelectedId,
+  clearExportRequest,
+} from "../../store/slices/canvasSlice";
 import { updateElement } from "../../store/slices/elementsSlice";
 
 const ImageFrame = lazy(() => import("./CanvasObjects/ImageFrame"));
@@ -13,15 +16,50 @@ const KonvaCanvas = () => {
   const stageRef = useRef(null);
   const dispatch = useDispatch();
 
-  const { width, height, scale, selectedId, backgroundColor } = useSelector(
-    (state) => state.canvas
-  );
+  const {
+    width,
+    height,
+    scale,
+    selectedId,
+    backgroundColor,
+    exportRequestTimestamp,
+  } = useSelector((state) => state.canvas);
   const elements = useSelector((state) => state.elements.items);
 
   const [containerSize, setContainerSize] = useState({
     width: window.innerWidth - 320,
     height: window.innerHeight - 64,
   });
+
+  useEffect(() => {
+    if (exportRequestTimestamp && stageRef.current) {
+      const stage = stageRef.current;
+      const previouslySelectedId = selectedId;
+      dispatch(setSelectedId(null));
+
+      stage.batchDraw();
+
+      setTimeout(() => {
+        const uri = stage.toDataURL({
+          mimeType: "image/png",
+          quality: 1,
+          pixelRatio: 1,
+        });
+        const link = document.createElement("a");
+        link.download = "design-export.png";
+        link.href = uri;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        if (previouslySelectedId) {
+          dispatch(setSelectedId(previouslySelectedId));
+        }
+
+        dispatch(clearExportRequest());
+      }, 200);
+    }
+  }, [exportRequestTimestamp, dispatch, selectedId]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -40,8 +78,17 @@ const KonvaCanvas = () => {
     scale;
 
   const handleStageClick = (e) => {
-    console.log(" Stage clicked, target:", e.target.getClassName());
+    const target = e.target;
+    const isStage = target === target.getStage();
+    const isBackgroundRect =
+      target.getClassName() === "Rect" &&
+      target.parent.getClassName() === "Layer";
+
+    if (isStage || isBackgroundRect) {
+      dispatch(setSelectedId(null));
+    }
   };
+
   const handleElementDragEnd = (id, e) => {
     dispatch(
       updateElement({
@@ -77,16 +124,8 @@ const KonvaCanvas = () => {
 
   const renderElement = (element) => {
     if (element.parentId) {
-      console.log("⏭️ Skipping child element:", element.id);
       return null;
     }
-
-    console.log("Rendering element:", {
-      id: element.id,
-      type: element.type,
-      clipShape: element.clipShape,
-      hasChildren: element.children?.length > 0,
-    });
 
     const commonProps = {
       element: element,
@@ -101,12 +140,6 @@ const KonvaCanvas = () => {
         element.children?.length > 0
           ? elements.find((el) => el.id === element.children[0])
           : null;
-
-      console.log(" Frame children lookup:", {
-        frameId: element.id,
-        childrenIds: element.children,
-        foundChild: childImage,
-      });
 
       return (
         <FrameContainer key={element.id} {...commonProps}>

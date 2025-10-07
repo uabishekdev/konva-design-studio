@@ -1,9 +1,19 @@
-import { createSlice } from "@reduxjs/toolkit";
-import { nanoid } from "@reduxjs/toolkit";
+import { createSlice, nanoid } from "@reduxjs/toolkit";
 
 const initialState = {
   items: [],
   layers: [],
+  history: [[]],
+  historyStep: 0,
+};
+
+// Helper function to save the current state to history
+const addToHistory = (state) => {
+  if (state.historyStep < state.history.length - 1) {
+    state.history = state.history.slice(0, state.historyStep + 1);
+  }
+  state.history.push(state.items);
+  state.historyStep += 1;
 };
 
 const elementsSlice = createSlice({
@@ -17,37 +27,30 @@ const elementsSlice = createSlice({
         children: [],
         ...action.payload,
       };
-      console.log(" ADD ELEMENT:", newElement);
       state.items.push(newElement);
       state.layers.push(newElement.id);
+      addToHistory(state);
     },
     updateElement: (state, action) => {
       const { id, updates } = action.payload;
       const index = state.items.findIndex((item) => item.id === id);
       if (index !== -1) {
         state.items[index] = { ...state.items[index], ...updates };
-        console.log(" UPDATE ELEMENT:", state.items[index]);
+        addToHistory(state);
       }
     },
     deleteElement: (state, action) => {
       const id = action.payload;
       state.items = state.items.filter((item) => item.id !== id);
       state.layers = state.layers.filter((layerId) => layerId !== id);
-      console.log(" DELETE ELEMENT:", id);
+      addToHistory(state);
     },
     addImageToFrame: (state, action) => {
       const { frameId, imageData } = action.payload;
-      console.log(" ADD IMAGE TO FRAME:", { frameId, imageData });
-
       const frameIndex = state.items.findIndex((item) => item.id === frameId);
-      console.log(" Frame index:", frameIndex);
-
       if (frameIndex !== -1) {
         const frame = state.items[frameIndex];
-        console.log(" Found frame:", frame);
-
         const imageId = nanoid();
-
         const imageElement = {
           id: imageId,
           type: "image",
@@ -57,17 +60,23 @@ const elementsSlice = createSlice({
           clipShape: frame.clipShape,
           cornerRadius: frame.cornerRadius,
         };
-
         if (frame.children && frame.children.length > 0) {
           const oldImageId = frame.children[0];
-          console.log(" Removing old image:", oldImageId);
           state.items = state.items.filter((item) => item.id !== oldImageId);
         }
-
         state.items[frameIndex].children = [imageId];
         state.items.push(imageElement);
-      } else {
-        console.error(" Frame not found!");
+        addToHistory(state);
+      }
+    },
+    // New Reducer for toggling video play state
+    toggleVideoPlay: (state, action) => {
+      const { id } = action.payload;
+      const index = state.items.findIndex(
+        (item) => item.id === id && item.type === "video"
+      );
+      if (index !== -1) {
+        state.items[index].isPlaying = !state.items[index].isPlaying;
       }
     },
     reorderLayers: (state, action) => {
@@ -86,6 +95,19 @@ const elementsSlice = createSlice({
         };
         state.items.push(newElement);
         state.layers.push(newElement.id);
+        addToHistory(state);
+      }
+    },
+    undo: (state) => {
+      if (state.historyStep > 0) {
+        state.historyStep -= 1;
+        state.items = state.history[state.historyStep];
+      }
+    },
+    redo: (state) => {
+      if (state.historyStep < state.history.length - 1) {
+        state.historyStep += 1;
+        state.items = state.history[state.historyStep];
       }
     },
   },
@@ -96,8 +118,11 @@ export const {
   updateElement,
   deleteElement,
   addImageToFrame,
+  toggleVideoPlay, // Export the new action
   reorderLayers,
   duplicateElement,
+  undo,
+  redo,
 } = elementsSlice.actions;
 
 export default elementsSlice.reducer;

@@ -11,13 +11,15 @@ import {
   ZoomOut,
 } from "lucide-react";
 import { togglePlay } from "../../store/slices/timelineSlice";
+import { undo, redo } from "../../store/slices/elementsSlice";
+import { requestExport } from "../../store/slices/canvasSlice";
 
 const Toolbar = () => {
   const dispatch = useDispatch();
   const { isPlaying } = useSelector((state) => state.timeline);
 
   const handleExport = () => {
-    alert("Export functionality coming soon!");
+    dispatch(requestExport());
   };
 
   return (
@@ -25,10 +27,18 @@ const Toolbar = () => {
       <div className="flex items-center gap-2">
         <h1 className="text-xl font-bold text-gray-800 mr-4">Design Editor</h1>
 
-        <button className="toolbar-btn" title="Undo">
+        <button
+          className="toolbar-btn"
+          title="Undo"
+          onClick={() => dispatch(undo())}
+        >
           <Undo2 size={20} />
         </button>
-        <button className="toolbar-btn" title="Redo">
+        <button
+          className="toolbar-btn"
+          title="Redo"
+          onClick={() => dispatch(redo())}
+        >
           <Redo2 size={20} />
         </button>
       </div>

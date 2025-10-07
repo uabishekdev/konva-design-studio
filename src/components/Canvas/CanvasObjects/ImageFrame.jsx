@@ -106,6 +106,8 @@ const ImageFrame = ({
       id={element.id}
       x={element.x}
       y={element.y}
+      width={element.width}
+      height={element.height}
       rotation={element.rotation || 0}
       draggable
       onClick={onSelect}
