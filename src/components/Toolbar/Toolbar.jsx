@@ -12,11 +12,12 @@ import {
 } from "lucide-react";
 import { togglePlay } from "../../store/slices/timelineSlice";
 import { undo, redo } from "../../store/slices/elementsSlice";
-import { requestExport } from "../../store/slices/canvasSlice";
+import { requestExport, zoom } from "../../store/slices/canvasSlice";
 
 const Toolbar = () => {
   const dispatch = useDispatch();
   const { isPlaying } = useSelector((state) => state.timeline);
+  const { scale } = useSelector((state) => state.canvas);
 
   const handleExport = () => {
     dispatch(requestExport());
@@ -26,7 +27,6 @@ const Toolbar = () => {
     <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4">
       <div className="flex items-center gap-2">
         <h1 className="text-xl font-bold text-gray-800 mr-4">Design Editor</h1>
-
         <button
           className="toolbar-btn"
           title="Undo"
@@ -54,10 +54,21 @@ const Toolbar = () => {
 
         <div className="w-px h-6 bg-gray-300 mx-2"></div>
 
-        <button className="toolbar-btn" title="Zoom In">
+        <button
+          className="toolbar-btn"
+          title="Zoom In"
+          onClick={() => dispatch(zoom(1.2))}
+        >
           <ZoomIn size={20} />
         </button>
-        <button className="toolbar-btn" title="Zoom Out">
+        <span className="text-sm w-12 text-center">
+          {Math.round(scale * 100)}%
+        </span>
+        <button
+          className="toolbar-btn"
+          title="Zoom Out"
+          onClick={() => dispatch(zoom(1 / 1.2))}
+        >
           <ZoomOut size={20} />
         </button>
 

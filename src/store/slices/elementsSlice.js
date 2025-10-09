@@ -7,7 +7,6 @@ const initialState = {
   historyStep: 0,
 };
 
-// Helper function to save the current state to history
 const addToHistory = (state) => {
   if (state.historyStep < state.history.length - 1) {
     state.history = state.history.slice(0, state.historyStep + 1);
@@ -21,12 +20,32 @@ const elementsSlice = createSlice({
   initialState,
   reducers: {
     addElement: (state, action) => {
-      const newElement = {
+      const baseProperties = {
         id: action.payload.id || nanoid(),
         createdAt: Date.now(),
         children: [],
-        ...action.payload,
+        rotation: 0,
+        opacity: 1,
       };
+
+      let specificProperties = {};
+      switch (action.payload.type) {
+        case "text":
+          specificProperties = {
+            text: "Sample Text",
+            fontSize: 48,
+            fontFamily: "sans-serif",
+            fill: "#000000",
+            align: "left",
+            verticalAlign: "top",
+            ...action.payload,
+          };
+          break;
+        default:
+          specificProperties = action.payload;
+      }
+
+      const newElement = { ...baseProperties, ...specificProperties };
       state.items.push(newElement);
       state.layers.push(newElement.id);
       addToHistory(state);
@@ -36,8 +55,10 @@ const elementsSlice = createSlice({
       const index = state.items.findIndex((item) => item.id === id);
       if (index !== -1) {
         state.items[index] = { ...state.items[index], ...updates };
-        addToHistory(state);
       }
+    },
+    finishUpdateElement: (state) => {
+      addToHistory(state);
     },
     deleteElement: (state, action) => {
       const id = action.payload;
@@ -57,8 +78,10 @@ const elementsSlice = createSlice({
           src: imageData.src,
           parentId: frameId,
           fit: "cover",
-          clipShape: frame.clipShape,
+          clipShape: frame.shapeType, // <-- FIX: Inherit shapeType from parent
           cornerRadius: frame.cornerRadius,
+          opacity: 1,
+          rotation: 0,
         };
         if (frame.children && frame.children.length > 0) {
           const oldImageId = frame.children[0];
@@ -69,7 +92,6 @@ const elementsSlice = createSlice({
         addToHistory(state);
       }
     },
-    // New Reducer for toggling video play state
     toggleVideoPlay: (state, action) => {
       const { id } = action.payload;
       const index = state.items.findIndex(
@@ -116,9 +138,10 @@ const elementsSlice = createSlice({
 export const {
   addElement,
   updateElement,
+  finishUpdateElement,
   deleteElement,
   addImageToFrame,
-  toggleVideoPlay, // Export the new action
+  toggleVideoPlay,
   reorderLayers,
   duplicateElement,
   undo,

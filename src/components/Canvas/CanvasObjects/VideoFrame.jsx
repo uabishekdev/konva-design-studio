@@ -93,6 +93,7 @@ const VideoFrame = ({
       width={element.width}
       height={element.height}
       rotation={element.rotation || 0}
+      opacity={element.opacity}
       draggable
       onClick={onSelect}
       onTap={onSelect}

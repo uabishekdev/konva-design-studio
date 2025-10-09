@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from "react";
 import { Group, Image as KonvaImage } from "react-konva";
 import useImage from "use-image";
+import Konva from "konva";
 
 const ImageFrame = ({
   element,
@@ -11,26 +12,34 @@ const ImageFrame = ({
   isChild = false,
 }) => {
   const groupRef = useRef();
+  const imageRef = useRef();
   const [image] = useImage(element.src, "anonymous");
   const [imageDimensions, setImageDimensions] = useState(null);
 
   useEffect(() => {
     if (image) {
-      setImageDimensions({
-        width: image.width,
-        height: image.height,
-      });
+      setImageDimensions({ width: image.width, height: image.height });
     }
   }, [image]);
 
+  useEffect(() => {
+    if (imageRef.current) {
+      imageRef.current.cache();
+      imageRef.current.getLayer()?.batchDraw();
+    }
+  }, [
+    image,
+    element.filters,
+    element.blurRadius,
+    element.width,
+    element.height,
+  ]);
+
   const getImageScale = () => {
     if (!imageDimensions) return { scaleX: 1, scaleY: 1 };
-
     const frameAspect = element.width / element.height;
     const imageAspect = imageDimensions.width / imageDimensions.height;
-
     let scaleX, scaleY;
-
     const fitMode = isChild ? "cover" : element.fit || "cover";
 
     if (fitMode === "cover") {
@@ -50,7 +59,6 @@ const ImageFrame = ({
         scaleY = scaleX;
       }
     }
-
     return { scaleX, scaleY };
   };
 
@@ -59,6 +67,12 @@ const ImageFrame = ({
     (element.width - (imageDimensions?.width || 0) * scale.scaleX) / 2;
   const imageY =
     (element.height - (imageDimensions?.height || 0) * scale.scaleY) / 2;
+
+  const appliedFilters = element.filters
+    ?.map((filterName) => {
+      return Konva.Filters[filterName];
+    })
+    .filter(Boolean);
 
   if (isChild) {
     return image && imageDimensions ? (
@@ -76,7 +90,6 @@ const ImageFrame = ({
 
   const clipFunc = (ctx) => {
     const { clipShape, cornerRadius = 0 } = element;
-
     if (clipShape === "circle") {
       const radius = Math.min(element.width, element.height) / 2;
       ctx.arc(element.width / 2, element.height / 2, radius, 0, Math.PI * 2);
@@ -84,7 +97,6 @@ const ImageFrame = ({
       const w = element.width;
       const h = element.height;
       const r = Math.min(cornerRadius, w / 2, h / 2);
-
       ctx.moveTo(r, 0);
       ctx.lineTo(w - r, 0);
       ctx.quadraticCurveTo(w, 0, w, r);
@@ -109,6 +121,7 @@ const ImageFrame = ({
       width={element.width}
       height={element.height}
       rotation={element.rotation || 0}
+      opacity={element.opacity}
       draggable
       onClick={onSelect}
       onTap={onSelect}
@@ -118,6 +131,7 @@ const ImageFrame = ({
       <Group clipFunc={clipFunc}>
         {image && imageDimensions && (
           <KonvaImage
+            ref={imageRef}
             image={image}
             x={imageX}
             y={imageY}
@@ -125,6 +139,8 @@ const ImageFrame = ({
             height={imageDimensions.height}
             scaleX={scale.scaleX}
             scaleY={scale.scaleY}
+            filters={appliedFilters}
+            blurRadius={element.blurRadius || 0}
           />
         )}
       </Group>

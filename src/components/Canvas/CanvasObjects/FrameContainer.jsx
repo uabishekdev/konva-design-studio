@@ -193,6 +193,7 @@ const FrameContainer = ({
       width={element.width}
       height={element.height}
       rotation={element.rotation || 0}
+      opacity={element.opacity}
       draggable
       onDragStart={handleDragStart}
       onDragEnd={onDragEnd}
