@@ -11,7 +11,7 @@ const addToHistory = (state) => {
   if (state.historyStep < state.history.length - 1) {
     state.history = state.history.slice(0, state.historyStep + 1);
   }
-  state.history.push(state.items);
+  state.history.push(JSON.parse(JSON.stringify(state.items)));
   state.historyStep += 1;
 };
 
@@ -78,10 +78,12 @@ const elementsSlice = createSlice({
           src: imageData.src,
           parentId: frameId,
           fit: "cover",
-          clipShape: frame.shapeType, // <-- FIX: Inherit shapeType from parent
+          clipShape: frame.shapeType,
           cornerRadius: frame.cornerRadius,
           opacity: 1,
           rotation: 0,
+          imageOffset: { x: 0, y: 0 },
+          imageScale: 1,
         };
         if (frame.children && frame.children.length > 0) {
           const oldImageId = frame.children[0];
@@ -91,6 +93,30 @@ const elementsSlice = createSlice({
         state.items.push(imageElement);
         addToHistory(state);
       }
+    },
+    loadTemplate: (state, action) => {
+      const { elements } = action.payload;
+      state.items = elements.map((el) => ({
+        ...el,
+        id: el.id || nanoid(),
+        createdAt: Date.now(),
+      }));
+      state.layers = state.items.map((el) => el.id);
+      state.history = [JSON.parse(JSON.stringify(state.items))];
+      state.historyStep = 0;
+    },
+    loadProject: (state, action) => {
+      const { elements } = action.payload;
+      state.items = elements;
+      state.layers = elements.map((el) => el.id);
+      state.history = [JSON.parse(JSON.stringify(state.items))];
+      state.historyStep = 0;
+    },
+    clearCanvas: (state) => {
+      state.items = [];
+      state.layers = [];
+      state.history = [[]];
+      state.historyStep = 0;
     },
     toggleVideoPlay: (state, action) => {
       const { id } = action.payload;
@@ -123,13 +149,17 @@ const elementsSlice = createSlice({
     undo: (state) => {
       if (state.historyStep > 0) {
         state.historyStep -= 1;
-        state.items = state.history[state.historyStep];
+        state.items = JSON.parse(
+          JSON.stringify(state.history[state.historyStep])
+        );
       }
     },
     redo: (state) => {
       if (state.historyStep < state.history.length - 1) {
         state.historyStep += 1;
-        state.items = state.history[state.historyStep];
+        state.items = JSON.parse(
+          JSON.stringify(state.history[state.historyStep])
+        );
       }
     },
   },
@@ -141,6 +171,9 @@ export const {
   finishUpdateElement,
   deleteElement,
   addImageToFrame,
+  loadTemplate,
+  loadProject,
+  clearCanvas,
   toggleVideoPlay,
   reorderLayers,
   duplicateElement,

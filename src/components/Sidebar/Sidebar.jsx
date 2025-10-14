@@ -1,27 +1,32 @@
 import React, { Suspense, lazy } from "react";
 import { useSelector } from "react-redux";
-import { Layers, Image, Video, Shapes, Type } from "lucide-react";
+import { Layers, Image, Video, Type, Layout, Save } from "lucide-react";
 
 const FramesPanel = lazy(() => import("./FramesPanel"));
 const ImagesPanel = lazy(() => import("./ImagesPanel"));
 const VideosPanel = lazy(() => import("./VideosPanel"));
 const TextPanel = lazy(() => import("./TextPanel"));
+const TemplatesPanel = lazy(() => import("./TemplatesPanel"));
+const ProjectsPanel = lazy(() => import("./ProjectsPanel"));
 const PropertiesPanel = lazy(() => import("./PropertiesPanel"));
 
 const Sidebar = () => {
-  const [activeTab, setActiveTab] = React.useState("images");
+  const [activeTab, setActiveTab] = React.useState("templates");
   const selectedId = useSelector((state) => state.canvas.selectedId);
 
   const tabs = [
+    { id: "templates", label: "Templates", icon: Layout },
     { id: "frames", label: "Frames", icon: Layers },
     { id: "images", label: "Images", icon: Image },
     { id: "videos", label: "Videos", icon: Video },
-    { id: "shapes", label: "Shapes", icon: Shapes },
     { id: "text", label: "Text", icon: Type },
+    { id: "projects", label: "Projects", icon: Save },
   ];
 
   const renderActivePanel = () => {
     switch (activeTab) {
+      case "templates":
+        return <TemplatesPanel />;
       case "frames":
         return <FramesPanel />;
       case "images":
@@ -30,6 +35,8 @@ const Sidebar = () => {
         return <VideosPanel />;
       case "text":
         return <TextPanel />;
+      case "projects":
+        return <ProjectsPanel />;
       default:
         return <div className="p-4">Select a tab</div>;
     }
@@ -37,13 +44,12 @@ const Sidebar = () => {
 
   return (
     <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-full">
-      {/* Tabs are always visible */}
-      <div className="flex border-b border-gray-200">
+      <div className="flex border-b border-gray-200 overflow-x-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+            className={`flex-1 flex flex-col items-center justify-center gap-1 px-3 py-3 text-xs font-medium transition-colors min-w-max ${
               activeTab === tab.id
                 ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
@@ -55,7 +61,6 @@ const Sidebar = () => {
         ))}
       </div>
 
-      {/* Scrollable content area */}
       <div className="flex-1 overflow-y-auto">
         <Suspense
           fallback={
@@ -64,10 +69,8 @@ const Sidebar = () => {
             </div>
           }
         >
-          {/* Show the selected panel for adding new elements */}
           <div>{renderActivePanel()}</div>
 
-          {/* If an element is selected, show the properties panel below it */}
           {selectedId && (
             <div className="border-t-4 border-gray-200">
               <PropertiesPanel />

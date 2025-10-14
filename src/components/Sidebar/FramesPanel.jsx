@@ -2,6 +2,7 @@ import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { addElement } from "../../store/slices/elementsSlice";
 import { setSelectedId } from "../../store/slices/canvasSlice";
+import { Info } from "lucide-react";
 
 const FramesPanel = () => {
   const dispatch = useDispatch();
@@ -53,9 +54,9 @@ const FramesPanel = () => {
         y: 300,
         width: frame.width,
         height: frame.height,
-        fill: "#f3f4f6",
-        borderColor: "#9ca3af",
-        borderWidth: 2,
+        fill: "#ffffff",
+        borderColor: "#d4a574",
+        borderWidth: 3,
         children: [],
       })
     );
@@ -68,29 +69,58 @@ const FramesPanel = () => {
     <div className="p-4">
       <h3 className="font-semibold text-lg mb-4">Frames</h3>
 
+      <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg">
+        <div className="flex items-start gap-2">
+          <Info size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-semibold text-blue-900 mb-2">
+              How to add photos to frames:
+            </p>
+            <ol className="text-xs text-blue-800 space-y-1 list-decimal list-inside">
+              <li>Click any frame below to add it to canvas</li>
+              <li>Click the frame on canvas to upload photo</li>
+              <li>Or select frame and use Images tab to upload</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
       {frameElements.length > 0 && (
-        <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-xs text-blue-700 font-medium mb-2">
-            Select a frame to add images:
+        <div className="mb-4 p-3 bg-green-50 rounded-lg border-2 border-green-200">
+          <p className="text-xs text-green-800 font-semibold mb-2">
+            📸 Frames on Canvas:
           </p>
           <div className="space-y-1">
-            {frameElements.map((frame) => (
-              <button
-                key={frame.id}
-                onClick={() => {
-                  console.log("Selecting frame:", frame.id);
-                  dispatch(setSelectedId(frame.id));
-                }}
-                className={`w-full text-left px-3 py-2 rounded text-sm transition-colors ${
-                  selectedId === frame.id
-                    ? "bg-blue-500 text-white font-medium"
-                    : "bg-white hover:bg-blue-100 text-gray-700"
-                }`}
-              >
-                {frame.clipShape === "circle" ? "⭕" : "▭"}{" "}
-                {frame.clipShape || "Frame"} - {frame.id.slice(-6)}
-              </button>
-            ))}
+            {frameElements.map((frame) => {
+              const hasImage = frame.children && frame.children.length > 0;
+              return (
+                <button
+                  key={frame.id}
+                  onClick={() => {
+                    dispatch(setSelectedId(frame.id));
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded text-sm transition-all flex items-center justify-between ${
+                    selectedId === frame.id
+                      ? "bg-blue-500 text-white font-medium shadow-md"
+                      : "bg-white hover:bg-blue-100 text-gray-700"
+                  }`}
+                >
+                  <span>
+                    {frame.shapeType === "circle" ? "⭕" : "▭"}{" "}
+                    {frame.shapeType || "Frame"} - #{frame.id.slice(-6)}
+                  </span>
+                  {hasImage ? (
+                    <span className="text-xs bg-green-500 text-white px-2 py-0.5 rounded-full">
+                      ✓ Photo
+                    </span>
+                  ) : (
+                    <span className="text-xs bg-orange-500 text-white px-2 py-0.5 rounded-full">
+                      Empty
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -100,22 +130,22 @@ const FramesPanel = () => {
           <button
             key={frame.id}
             onClick={() => addFrame(frame)}
-            className={`group relative aspect-video bg-gradient-to-br ${frame.fill} rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 hover:scale-105`}
+            className="group relative aspect-video bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg overflow-hidden hover:shadow-xl transition-all duration-200 hover:scale-105 border-2 border-gray-300 hover:border-blue-500"
           >
-            <svg
-              viewBox="0 0 100 60"
-              className="w-full h-full p-3"
-              preserveAspectRatio="xMidYMid meet"
-            >
-              <path
-                d={frame.preview}
-                fill="rgba(255,255,255,0.7)"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="text-gray-600"
-              />
-            </svg>
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/50 to-transparent p-2">
+            <div className="absolute inset-0 flex items-center justify-center">
+              {frame.type === "circle" ? (
+                <div className="w-20 h-20 rounded-full border-4 border-gray-400 group-hover:border-blue-500 transition-colors"></div>
+              ) : frame.type === "ellipse" ? (
+                <div className="w-24 h-16 rounded-full border-4 border-gray-400 group-hover:border-blue-500 transition-colors"></div>
+              ) : (
+                <div
+                  className={`w-24 h-16 border-4 border-gray-400 group-hover:border-blue-500 transition-colors ${
+                    frame.cornerRadius ? "rounded-lg" : ""
+                  }`}
+                ></div>
+              )}
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
               <p className="text-white text-xs font-medium text-center">
                 {frame.name}
               </p>

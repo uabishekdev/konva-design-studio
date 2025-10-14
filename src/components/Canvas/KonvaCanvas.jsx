@@ -153,6 +153,7 @@ const KonvaCanvas = () => {
 
   const renderElement = (element) => {
     if (element.parentId) return null;
+
     const commonProps = {
       element,
       isSelected: element.id === selectedId,
@@ -160,6 +161,7 @@ const KonvaCanvas = () => {
       onDragEnd: (e) => handleDragEnd(element.id, e),
       onTransformEnd: (node) => handleTransformEnd(element.id, node),
     };
+
     if (element.type === "shape") {
       const childImage =
         element.children?.length > 0
@@ -171,6 +173,7 @@ const KonvaCanvas = () => {
         </FrameContainer>
       );
     }
+
     switch (element.type) {
       case "image":
         return <ImageFrame key={element.id} {...commonProps} />;
@@ -188,6 +191,10 @@ const KonvaCanvas = () => {
         return null;
     }
   };
+
+  const selectedElement = elements.find((el) => el.id === selectedId);
+  const shouldShowTransformer =
+    selectedId && selectedElement && !selectedElement.parentId;
 
   return (
     <div className="flex items-center justify-center w-full h-full bg-gray-200 overflow-hidden">
@@ -218,7 +225,9 @@ const KonvaCanvas = () => {
           <Layer>
             <Suspense fallback={null}>
               {elements.map((element) => renderElement(element))}
-              {selectedId && <CustomTransformer selectedId={selectedId} />}
+              {shouldShowTransformer && (
+                <CustomTransformer selectedId={selectedId} />
+              )}
             </Suspense>
           </Layer>
         </Stage>

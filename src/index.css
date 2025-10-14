@@ -28,4 +28,16 @@
   .frame-item {
     @apply aspect-video bg-gradient-to-br rounded-lg overflow-hidden hover:shadow-lg transition-all duration-200 hover:scale-105 cursor-pointer;
   }
+
+  input[type="range"] {
+    @apply cursor-pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    @apply cursor-grab active:cursor-grabbing;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    @apply cursor-grab active:cursor-grabbing;
+  }
 }
