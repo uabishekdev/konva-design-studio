@@ -3,10 +3,14 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   width: 1920,
   height: 1080,
-  scale: 0.5, // Adjusted initial scale
+  scale: 0.5,
   selectedId: null,
   backgroundColor: "#ffffff",
   exportRequestTimestamp: null,
+  showGrid: false,
+  snapToGrid: false,
+  gridSize: 20,
+  showRulers: false,
 };
 
 const canvasSlice = createSlice({
@@ -22,7 +26,7 @@ const canvasSlice = createSlice({
     },
     zoom: (state, action) => {
       const newScale = state.scale * action.payload;
-      state.scale = Math.max(0.1, Math.min(newScale, 3)); // Clamp scale between 10% and 300%
+      state.scale = Math.max(0.1, Math.min(newScale, 3));
     },
     setSelectedId: (state, action) => {
       state.selectedId = action.payload;
@@ -36,6 +40,18 @@ const canvasSlice = createSlice({
     clearExportRequest: (state) => {
       state.exportRequestTimestamp = null;
     },
+    toggleGrid: (state) => {
+      state.showGrid = !state.showGrid;
+    },
+    toggleSnapToGrid: (state) => {
+      state.snapToGrid = !state.snapToGrid;
+    },
+    setGridSize: (state, action) => {
+      state.gridSize = action.payload;
+    },
+    toggleRulers: (state) => {
+      state.showRulers = !state.showRulers;
+    },
   },
 });
 
@@ -47,6 +63,10 @@ export const {
   setBackgroundColor,
   requestExport,
   clearExportRequest,
+  toggleGrid,
+  toggleSnapToGrid,
+  setGridSize,
+  toggleRulers,
 } = canvasSlice.actions;
 
 export default canvasSlice.reducer;
